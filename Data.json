@@ -1,0 +1,23 @@
+{
+  "bruxaria": {
+    "descricao": "Práticas espirituais ligadas à magia, natureza e tradição."
+  },
+  "tarot": [
+    {
+      "carta": "A Sacerdotisa",
+      "significado": "Intuição e sabedoria oculta"
+    }
+  ],
+  "cristais": [
+    {
+      "nome": "Quartzo",
+      "uso": "Amplificação de energia"
+    }
+  ],
+  "herbologia": [
+    {
+      "erva": "Alecrim",
+      "uso": "Proteção e clareza mental"
+    }
+  ]
+}
