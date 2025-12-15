@@ -2,13 +2,13 @@ const express = require("express");
 const app = express();
 
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
     status: "API ONLINE",
     mensagem: "Grimório Universal API funcionando"
   });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("Servidor rodando na porta " + PORT);
 });
