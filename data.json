@@ -1,1 +1,17 @@
-{}
+{
+  "bruxaria": {
+    "descricao": "Práticas espirituais e mágicas gerais."
+  },
+  "tarot": [
+    {
+      "carta": "O Mago",
+      "significado": "Vontade, ação e manifestação"
+    }
+  ],
+  "cristais": [
+    {
+      "nome": "Quartzo",
+      "uso": "Amplificação de energia"
+    }
+  ]
+}
