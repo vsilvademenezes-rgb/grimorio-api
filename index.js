@@ -1,88 +1,67 @@
 const express = require("express");
-const fs = require('fs'); // Módulo para ler arquivos
-const path = require('path'); // Módulo para lidar com caminhos
-const app = express();
+const { createCanvas, loadImage, registerFont } = require("canvas");
 
+const app = express();
 app.use(express.json());
 
-// --- LÓGICA DE CARREGAMENTO DINÂMICO ---
-const data = {};
-const dataDir = path.join(__dirname, 'data'); // Define o caminho da pasta 'data'
+registerFont("./fonts/Poppins-Bold.ttf", { family: "Poppins" });
 
-// Carrega todos os arquivos JSON dentro da pasta 'data'
-try {
-  fs.readdirSync(dataDir).forEach(file => {
-    if (path.extname(file) === '.json') {
-      const categoryName = path.basename(file, '.json');
-      // Carrega o conteúdo do JSON e armazena com o nome do arquivo (sem extensão)
-      data[categoryName] = require(path.join(dataDir, file));
-      console.log(`Categoria carregada: ${categoryName}`);
-    }
-  });
-} catch (error) {
-  console.error("Erro ao carregar dados:", error);
-  // É bom ter um ponto de falha aqui para saber se a API vai subir sem dados
-}
-// --- FIM DA LÓGICA DE CARREGAMENTO ---
-
-
-// Rota principal (Status)
 app.get("/", (req, res) => {
-  res.json({
-    nome: "Grimório Universal API",
-    status: "online",
-    categorias_carregadas: Object.keys(data).length
-  });
+  res.json({ status: "online", api: "Profile Image API" });
 });
 
-// Rota categorias (Lista de todos os temas)
-app.get("/categorias", (req, res) => {
-  res.json(Object.keys(data));
+app.post("/perfil", async (req, res) => {
+  const {
+    username,
+    avatar,
+    banner,
+    reps,
+    saldo,
+    banco,
+    nivel,
+    xp,
+    sobre
+  } = req.body;
+
+  const canvas = createCanvas(900, 500);
+  const ctx = canvas.getContext("2d");
+
+  // Banner
+  const bg = await loadImage(banner);
+  ctx.drawImage(bg, 0, 0, 900, 500);
+
+  // Overlay
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillRect(0, 0, 900, 500);
+
+  // Avatar
+  const av = await loadImage(avatar);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(130, 130, 70, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  ctx.drawImage(av, 60, 60, 140, 140);
+  ctx.restore();
+
+  // Textos
+  ctx.fillStyle = "#fff";
+  ctx.font = "28px Poppins";
+  ctx.fillText(username, 220, 120);
+
+  ctx.font = "18px Poppins";
+  ctx.fillText(`Reps: ${reps}`, 220, 160);
+  ctx.fillText(`Saldo: ${saldo}`, 60, 260);
+  ctx.fillText(`Banco: ${banco}`, 60, 300);
+  ctx.fillText(`Nível: ${nivel}`, 60, 340);
+  ctx.fillText(`XP: ${xp}`, 60, 380);
+
+  ctx.font = "16px Poppins";
+  ctx.fillText(`Sobre mim: ${sobre}`, 220, 200);
+
+  res.set("Content-Type", "image/png");
+  res.send(canvas.toBuffer());
 });
-
-// Rota dinâmica (Busca a categoria inteira: /tarot ou /bruxaria)
-app.get("/:categoria", (req, res) => {
-  const categoria = req.params.categoria.toLowerCase();
-
-  if (!data[categoria]) {
-    return res.status(404).json({
-      erro: "Categoria não encontrada. Verifique a lista em /categorias"
-    });
-  }
-
-  res.json(data[categoria]);
-});
-
-// Rota para item específico (Busca um item dentro da categoria: /tarot/o mago)
-app.get("/:categoria/:item", (req, res) => {
-  const { categoria, item } = req.params;
-
-  const categoriaData = data[categoria.toLowerCase()];
-
-  // 1. Verifica se a categoria existe ou se não é um array (pois só buscamos itens em arrays)
-  if (!categoriaData || !Array.isArray(categoriaData)) {
-    return res.status(404).json({ erro: "Categoria não encontrada ou não suporta busca de item." });
-  }
-
-  // 2. Procura o item (seja por 'nome' ou 'carta' no exemplo)
-  const itemBuscado = categoriaData.find(obj => {
-    // Tenta encontrar pelo campo 'nome' (para cristais, por exemplo)
-    if (obj.nome && obj.nome.toLowerCase() === item.toLowerCase()) return true;
-    // Tenta encontrar pelo campo 'carta' (para tarot, por exemplo)
-    if (obj.carta && obj.carta.toLowerCase() === item.toLowerCase()) return true;
-    return false;
-  });
-
-  if (!itemBuscado) {
-    return res.status(404).json({ erro: `Item "${item}" não encontrado em "${categoria}".` });
-  }
-
-  res.json(itemBuscado);
-});
-
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log("API rodando na porta " + PORT);
-  console.log(`Acesse: http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log("API rodando"));
