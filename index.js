@@ -1,67 +1,56 @@
 const express = require("express");
-const { createCanvas, loadImage, registerFont } = require("canvas");
-
+const { createCanvas, loadImage } = require("canvas");
 const app = express();
+
 app.use(express.json());
 
-registerFont("./fonts/Poppins-Bold.ttf", { family: "Poppins" });
+const profiles = require("./profiles.json");
 
 app.get("/", (req, res) => {
-  res.json({ status: "online", api: "Profile Image API" });
+  res.json({
+    nome: "Perfil API",
+    status: "online",
+    canvas: "ativo"
+  });
 });
 
-app.post("/perfil", async (req, res) => {
-  const {
-    username,
-    avatar,
-    banner,
-    reps,
-    saldo,
-    banco,
-    nivel,
-    xp,
-    sobre
-  } = req.body;
+// JSON do perfil
+app.get("/perfil/:id/json", (req, res) => {
+  const id = req.params.id;
+  if (!profiles[id]) {
+    return res.status(404).json({ erro: "Perfil não encontrado" });
+  }
+  res.json(profiles[id]);
+});
+
+// IMAGEM (BASE – ainda simples)
+app.get("/perfil/:id", async (req, res) => {
+  const id = req.params.id;
+  if (!profiles[id]) {
+    return res.status(404).json({ erro: "Perfil não encontrado" });
+  }
 
   const canvas = createCanvas(900, 500);
   const ctx = canvas.getContext("2d");
 
-  // Banner
-  const bg = await loadImage(banner);
-  ctx.drawImage(bg, 0, 0, 900, 500);
+  // fundo
+  ctx.fillStyle = "#0f0f0f";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Overlay
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(0, 0, 900, 500);
+  // texto
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "30px Arial";
+  ctx.fillText(profiles[id].nome, 50, 80);
 
-  // Avatar
-  const av = await loadImage(avatar);
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(130, 130, 70, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.clip();
-  ctx.drawImage(av, 60, 60, 140, 140);
-  ctx.restore();
-
-  // Textos
-  ctx.fillStyle = "#fff";
-  ctx.font = "28px Poppins";
-  ctx.fillText(username, 220, 120);
-
-  ctx.font = "18px Poppins";
-  ctx.fillText(`Reps: ${reps}`, 220, 160);
-  ctx.fillText(`Saldo: ${saldo}`, 60, 260);
-  ctx.fillText(`Banco: ${banco}`, 60, 300);
-  ctx.fillText(`Nível: ${nivel}`, 60, 340);
-  ctx.fillText(`XP: ${xp}`, 60, 380);
-
-  ctx.font = "16px Poppins";
-  ctx.fillText(`Sobre mim: ${sobre}`, 220, 200);
+  ctx.font = "20px Arial";
+  ctx.fillText(`Nível: ${profiles[id].nivel}`, 50, 130);
+  ctx.fillText(`Banco: ${profiles[id].banco}`, 50, 170);
 
   res.set("Content-Type", "image/png");
   res.send(canvas.toBuffer());
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("API rodando"));
+app.listen(PORT, () => {
+  console.log("Perfil API rodando na porta " + PORT);
+});
